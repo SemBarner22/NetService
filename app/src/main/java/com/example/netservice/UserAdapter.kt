@@ -14,7 +14,7 @@ import kotlinx.android.synthetic.main.list_item.view.*
 import java.util.*
 
 class UserAdapter(
-    val pictures: MutableList<User>,
+    val pictures: List<User>,
     val onClick: (User) -> Unit)
     : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 

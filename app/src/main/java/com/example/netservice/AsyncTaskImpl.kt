@@ -9,7 +9,7 @@ import java.lang.ref.WeakReference
 import java.net.HttpURLConnection
 import java.net.URL
 
-class AsyncTaskImpl(activity: MainActivity) : AsyncTask<String, Void, MutableList<User>?>() {
+class AsyncTaskImpl(activity: MainActivity) : AsyncTask<String, Void, List<User>>() {
     private val activityRef = WeakReference(activity)
     private var pictures: MutableList<User>? = emptyList<User>().toMutableList()
 //    "https://api.unsplash.com/search/photos?query=slave&client_id=RN2wHFLxJnmhFf-ZxhdoYO_WVKHAE1hq66CUbs3S3r4"
@@ -35,8 +35,8 @@ class AsyncTaskImpl(activity: MainActivity) : AsyncTask<String, Void, MutableLis
         return pictures
     }
 
-    override fun onPostExecute(result: MutableList<User>?) {
+    override fun onPostExecute(result: List<User>) {
         val activity = activityRef.get()
-        result?.let { activity?.next(it) }
+        result.let { activity?.next(it) }
     }
 }

@@ -63,22 +63,22 @@ import java.net.URL
 //    }
 
 
-    class ImagesService(name: String = "") : IntentService(name) {
-
-        override fun onHandleIntent(intent: Intent?) {
-            val url = intent?.extras!!.getString("link")
-            val a = BitmapFactory.decodeStream(URL(url).openConnection().getInputStream())
-            val fileOutput = openFileOutput("temp.txt", MODE_PRIVATE)
-            fileOutput.use {
-                a.compress(Bitmap.CompressFormat.PNG, 100, fileOutput)
-                fileOutput.flush()
-            }
-            val responseIntent = Intent("loaded")
-            responseIntent.putExtra("progress", "ready")
-            sendBroadcast(responseIntent)
-        }
-
-    }
+//    class ImagesService(name: String = "") : IntentService(name) {
+//
+//        override fun onHandleIntent(intent: Intent?) {
+//            val url = intent?.extras!!.getString("link")
+//            val a = BitmapFactory.decodeStream(URL(url).openConnection().getInputStream())
+//            val fileOutput = openFileOutput("temp.txt", MODE_PRIVATE)
+//            fileOutput.use {
+//                a.compress(Bitmap.CompressFormat.PNG, 100, fileOutput)
+//                fileOutput.flush()
+//            }
+//            val responseIntent = Intent("loaded")
+//            responseIntent.putExtra("progress", "ready")
+//            sendBroadcast(responseIntent)
+//        }
+//
+//    }
 //}
 
 //        finding.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
