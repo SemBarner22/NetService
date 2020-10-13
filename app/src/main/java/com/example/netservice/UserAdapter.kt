@@ -1,5 +1,6 @@
 package com.example.netservice
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.BitmapFactory.decodeByteArray
 import android.graphics.drawable.BitmapDrawable
@@ -15,6 +16,7 @@ import java.util.*
 
 class UserAdapter(
     val pictures: List<User>,
+    private val context: Context,
     val onClick: (User) -> Unit)
     : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
@@ -24,7 +26,7 @@ class UserAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val holder = UserViewHolder(
-            LayoutInflater.from(parent.context)
+            LayoutInflater.from(context)
                 .inflate(
                     R.layout.list_item,
                     parent,
