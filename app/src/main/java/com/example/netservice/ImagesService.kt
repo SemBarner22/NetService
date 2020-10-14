@@ -13,8 +13,8 @@ class ImagesService : Service() {
 
 
     class ImagesBinder(private val service: ImagesService) : Binder() {
-        fun getPictures(): ArrayList<User>? {
-            return service.pictures
+        fun getService() : ImagesService {
+            return service
         }
     }
 

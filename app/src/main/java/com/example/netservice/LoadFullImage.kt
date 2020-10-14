@@ -32,7 +32,9 @@ class LoadFullImage : Service() {
     }
 
     class LoadBinder(private val service: LoadFullImage) : Binder() {
-        fun getPicture(): Bitmap? = service.image
+        fun getService() : LoadFullImage {
+            return service
+        }
     }
 
     fun onPostExecute(result: Bitmap?) {

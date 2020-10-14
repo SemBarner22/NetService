@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             mBound = true
             val binder = service as ImagesService.ImagesBinder
-            pictures = binder.getPictures()
+            pictures = binder.getService().pictures
             pictures?.let { p ->
                 myAdapter.apply {
                     this.pictures = p

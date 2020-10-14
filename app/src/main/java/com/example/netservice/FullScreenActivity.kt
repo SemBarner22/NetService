@@ -2,6 +2,7 @@ package com.example.netservice
 
 
 import android.content.*
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.IBinder
 import androidx.appcompat.app.AppCompatActivity
@@ -25,7 +26,7 @@ class FullScreenActivity : AppCompatActivity() {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             mBound = true
             val binder = service as LoadFullImage.LoadBinder
-            picture.setImageBitmap(binder.getPicture())
+            picture.setImageBitmap(binder.getService().image)
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
