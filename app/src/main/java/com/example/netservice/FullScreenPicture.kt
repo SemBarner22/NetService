@@ -8,40 +8,63 @@ import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
+import android.os.AsyncTask
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.android.synthetic.main.fullscreen.*
 import java.io.ByteArrayOutputStream
+import java.lang.ref.WeakReference
 import java.net.URL
 
 class FullScreenPicture : AppCompatActivity() {
+    private var image: Bitmap? = null
     private var myBroadCastReceiver: BroadcastReceiver? = null
+    private var imageUrl: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.fullscreen)
+    private class ImageLoader(activity: FullScreenPicture) : AsyncTask<String, Void, Bitmap>() {
+        private val activityWeakRef = WeakReference(activity)
 
-        startService(Intent(this, LoadFullImage::class.java).apply {
-//            putExtra(PICTURE_TAG, intent.getStringExtra(PICTURE_TAG))
-        })
-
-        myBroadCastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val byteArray = intent?.getByteArrayExtra("byteArray")
-                if (byteArray != null) {
-                    val byteImage = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                    picture.setImageBitmap(byteImage)
-                }
+        override fun doInBackground(vararg params: String?): Bitmap {
+            val url = URL(params[0])
+            return url.openConnection().getInputStream().use {
+                BitmapFactory.decodeStream(it)
             }
         }
 
-        LocalBroadcastManager.getInstance(this)
-            .registerReceiver(myBroadCastReceiver as BroadcastReceiver,
-                IntentFilter("response").apply {
-                    addCategory(Intent.CATEGORY_DEFAULT)
-                })
+        override fun onPostExecute(result: Bitmap?) {
+            val activity = activityWeakRef.get()
+            activity?.onImageLoaded(result)
+        }
+    }
+//
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.fullscreen)
+        imageUrl = intent.extras?.getString("link")
+//        startService(Intent(this, LoadFullImage::class.java).apply {
+////            putExtra(PICTURE_TAG, intent.getStringExtra(PICTURE_TAG))
+//        })
+
+//        myBroadCastReceiver = object : BroadcastReceiver() {
+//            override fun onReceive(context: Context?, intent: Intent?) {
+//                Log.e("SC", "Received")
+//                val byteArray = intent?.getByteArrayExtra("byteArray")
+//                if (byteArray != null) {
+//                    val byteImage = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+//                    picture.setImageBitmap(byteImage)
+//                }
+//            }
+//        }
+//
+//        LocalBroadcastManager.getInstance(this)
+//            .registerReceiver(myBroadCastReceiver as BroadcastReceiver,
+//                IntentFilter("response").apply {
+//                    addCategory(Intent.CATEGORY_DEFAULT)
+//                })
+//        Log.e("SC", "Activity created")
     }
 
 
@@ -90,10 +113,33 @@ class FullScreenPicture : AppCompatActivity() {
 //        }
 //    }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(myBroadCastReceiver!!)
+    internal fun onImageLoaded(result: Bitmap?) {
+        image = result
+        picture.setImageBitmap(result)
     }
+
+    override fun onResume() {
+        super.onResume()
+        if (image == null) ImageLoader(this).execute(imageUrl)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable("image", image)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        image = savedInstanceState.getParcelable("image")
+        if (image != null) {
+            onImageLoaded(image)
+        }
+    }
+
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        LocalBroadcastManager.getInstance(this).unregisterReceiver(myBroadCastReceiver!!)
+//    }
 
 }
 
@@ -104,11 +150,14 @@ class LoadFullImage : IntentService("LoadFullImage") {
     }
 
     override fun onHandleIntent(intent: Intent?) {
-//        val url = intent?.getStringExtra("link") ?: return
-        val bundle: Bundle = intent?.extras ?: return
-        val url = (bundle["user"] as User).highQ
+        val url = intent?.getStringExtra("link") ?: return
+//        val bundle: Bundle = intent?.extras ?: return
+//        val url = (bundle["user"] as User).highQ
         val image = BitmapFactory.decodeStream(URL(url).openConnection().getInputStream())
-
+        if (image == null)
+            Log.e("SC", "No image")
+        else
+            Log.e("SC", "Yes image")
         LocalBroadcastManager.getInstance(baseContext).sendBroadcast(Intent().apply {
             action = "response"
             addCategory(Intent.CATEGORY_DEFAULT)

@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.list_item.view.*
 import java.util.*
 
 class UserAdapter(
-    val pictures: List<User>,
+    val pictures: ArrayList<User>,
     private val context: Context,
     val onClick: (User) -> Unit)
     : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
@@ -39,6 +39,12 @@ class UserAdapter(
         return holder
     }
 
+
+    fun updateData(newData: ArrayList<User>) {
+        pictures.clear()
+        pictures.addAll(newData)
+        notifyDataSetChanged()
+    }
 
     inner class UserViewHolder(var root: View) : RecyclerView.ViewHolder(root) {
         fun bind(user: User) {

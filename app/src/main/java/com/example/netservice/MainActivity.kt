@@ -1,28 +1,36 @@
 package com.example.netservice
 
 import android.app.IntentService
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.app.Service
+import android.content.*
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
+import android.os.Binder
 import android.os.Bundle
-import android.view.View
+import android.os.IBinder
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fullscreen.*
 import java.io.ByteArrayOutputStream
 import java.lang.ref.WeakReference
-import java.net.URL
 
 
 class MainActivity : AppCompatActivity() {
     //    private var lastRequest: String? = ""
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Log.e("SC", "Received")
+            previewsDownloaded = true
+            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+//            onListLoaded()
+        }
+    }
+
+    private var previewsDownloaded = false
     var pictures: ArrayList<User>? = null
-    var a: AsyncTaskImpl? = null
 
 //    private lateinit var mMyBroadcastReceiver: MyBroadcastReceiver
 //    companion object {
@@ -32,26 +40,102 @@ class MainActivity : AppCompatActivity() {
 //        ash.com/search/photos"
 //    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-//        progress.visibility = View.INVISIBLE
-//        mMyBroadcastReceiver = MyBroadcastReceiver()
-        val intentFilter = IntentFilter("loaded")
-//        registerReceiver(mMyBroadcastReceiver, intentFilter)
-        a = (lastCustomNonConfigurationInstance as? AsyncTaskImpl) ?: AsyncTaskImpl(this)
-//        a?.attachActivity(this)
-        method()
-//        permissions()
-    }
 
-    private fun method() {
-        a?.activityRef = WeakReference(null)
-        a = AsyncTaskImpl(this).apply {
-            execute("house")
-            attachActivity(this@MainActivity)
+    //    private var myBroadCastReceiver: BroadcastReceiver? = null
+//    lateinit var service: ImagesService
+    private var mBound: Boolean = false
+    private var serviceIntent: Intent? = null
+    private lateinit var myAdapter: UserAdapter
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            mBound = true
+            val binder = service as ImagesService.LocalBinder
+
+            pictures = binder.getPictures()
+//            service.getPictures()
+            Log.e("SC", "onServiceConnected")
+            pictures?.let { myAdapter.updateData(it) }
+            Log.e("SC", "DataUpdated")
+//            createRecyclerView(pictures)
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            mBound = false
         }
     }
+
+    //    var localBinder: LocalBinder? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        serviceIntent = Intent(applicationContext, ImagesService::class.java)
+        Log.e("SC", "Started0")
+        setContentView(R.layout.activity_main)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (previewsDownloaded) {
+            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (mBound) unbindService(connection)
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+        Log.e("SC", "Started")
+        startService(serviceIntent)
+        registerReceiver(broadcastReceiver, IntentFilter("PreviewsDownloaded"))
+        val viewManager = LinearLayoutManager(this@MainActivity)
+        Log.e("SC", "Started2")
+        myAdapter = UserAdapter(ArrayList(), this@MainActivity) { user ->
+//            val string = user.highQ?.substring(0)
+            //                    var bundle = Bundle()
+            //                    bundle.putParcelable("user", user)
+            val intent = Intent(this@MainActivity, FullScreenPicture::class.java).apply {
+                putExtra("link", user.highQ)
+                //                        putExtras(bundle)
+                //                        putExtra("bundle", bundle)
+            }
+            startActivity(intent)
+        }
+        Log.e("SC", "Started3")
+        myRecyclerView.apply {
+            layoutManager = viewManager
+            adapter = myAdapter
+        }
+        Log.e("SC", "Started4")
+    }
+//        progress.visibility = View.INVISIBLE
+//        mMyBroadcastReceiver = MyBroadcastReceiver()
+//        val intent = Intent(this, ImagesService::class.java)
+//        val serviceIntent = Intent(this, ImagesService::class.java)
+//        service = ImagesService(this)
+//        localBinder = LocalBinder(service)
+//        myBroadCastReceiver = object : BroadcastReceiver() {
+//            override fun onReceive(context: Context?, intent: Intent?) {
+//                val byteArray = intent?.getByteArrayExtra("byteArray")
+//                if (byteArray != null) {
+//                    val byteImage = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+//                    picture.setImageBitmap(byteImage)
+//                }
+//            }
+//        }
+
+//        LocalBroadcastManager.getInstance(this)
+//            .registerReceiver(myBroadCastReceiver as BroadcastReceiver,
+//                IntentFilter("response").apply {
+//                    addCategory(Intent.CATEGORY_DEFAULT)
+//                })
+//        val intentFilter = IntentFilter("loaded")
+//        registerReceiver(mMyBroadcastReceiver, intentFilter)
+//        permissions()
 
 
 //    private fun permissions() {
@@ -71,26 +155,14 @@ class MainActivity : AppCompatActivity() {
 //        }
 //    }
 
-    override fun onRetainCustomNonConfigurationInstance(): Any? = a
+//    override fun onRetainCustomNonConfigurationInstance(): Any? = a
 
-    private fun createRecyclerView() {
-        val viewManager = LinearLayoutManager(this)
-        myRecyclerView.apply {
-            layoutManager = viewManager
-            val myAdapter = pictures?.let {
-                UserAdapter(it, applicationContext) { user ->
-                    val string = user.highQ?.substring(0)
-                    var bundle = Bundle()
-                    bundle.putParcelable("user", user)
-                    val intent = Intent(this@MainActivity, FullScreenPicture::class.java).apply {
-//                        putExtra("link", string)
-                        putExtras(bundle)
-//                        putExtra("bundle", bundle)
-                    }
-                    startActivity(intent)
-                }
-            }
-            adapter = myAdapter
+//fun createRecyclerView(curList: ArrayList<User>?) {
+////        val pictures = localBinder?.getPictures()
+//    val viewManager = LinearLayoutManager(this)
+//    myRecyclerView.apply {
+//        adapter = myAdapter
+//        layoutManager = viewManager
 //            adapter = pictures?.let {
 //                    list ->
 //                UserAdapter(list) {
@@ -108,9 +180,9 @@ class MainActivity : AppCompatActivity() {
 //                    })
 //                    startService(intentService)
 //                }
-        }
+//    }
 //            setHasFixedSize(true)
-    }
+//}
 //    }
 
 //    fun next(result: ArrayList<User>) {
@@ -121,32 +193,35 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        pictures = savedInstanceState.getParcelableArrayList("items")
-//        method()
-        if (pictures != null)
-            createRecyclerView()
+        serviceIntent = savedInstanceState.getParcelable("serviceIntent")
+        previewsDownloaded = savedInstanceState.getBoolean("previewsDownloaded")
+        mBound = savedInstanceState.getBoolean("bound")
+        if (previewsDownloaded) {
+            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+        }
+
+//        pictures = savedInstanceState.getParcelableArrayList("items")
+////        method()
+//        if (pictures != null)
+//            createRecyclerView()
     }
 
     //
+//    //
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putParcelableArrayList("items", pictures)
+        outState.putBoolean("previewsDownloaded", previewsDownloaded)
+        outState.putBoolean("bound", mBound)
+        outState.putParcelable("serviceIntent", serviceIntent)
     }
+}
 
-    fun setMoviesInUI(curList: ArrayList<User>?) {
-//        if (curList != null) {
-//            next(curList)
-//        }
-        a = null
-        pictures = curList
-        createRecyclerView()
-    }
 //    override fun onResume() {
 //        super.onResume()
 //        if (pictures == null) AsyncTaskImpl(this).execute("house")
 //    }
 
-}
+//}
 //    inner class MyBroadcastReceiver : BroadcastReceiver() {
 //        override fun onReceive(context: Context?, intent: Intent?) {
 ////            loaded = true
@@ -163,37 +238,7 @@ class MainActivity : AppCompatActivity() {
 //    }
 //}
 
-//class ImagesService(name: String = "") : IntentService(name) {
-//
-//    init {
-//        setIntentRedelivery(true)
-//    }
-//
-//    override fun onHandleIntent(intent: Intent?) {
-////        val url = intent?.extras!!.getString("link")
-////        val a = BitmapFactory.decodeStream(URL(url).openConnection().getInputStream())
-////        val fileOutput = openFileOutput("temp.txt", MODE_PRIVATE)
-////        fileOutput.use {
-////            a.compress(Bitmap.CompressFormat.PNG, 100, fileOutput)
-////            fileOutput.flush()
-////        }
-////        val responseIntent = Intent("loaded")
-////        responseIntent.putExtra("progress", "ready")
-////        sendBroadcast(responseIntent)
-//        val url = intent?.getStringExtra("link") ?: return
-//        val image = BitmapFactory.decodeStream(URL(url).openConnection().getInputStream())
-//
-//        LocalBroadcastManager.getInstance(baseContext).sendBroadcast(Intent().apply {
-//            action = "response"
-//            addCategory(Intent.CATEGORY_DEFAULT)
-//            putExtra("byteArray", ByteArrayOutputStream().apply {
-//                image.compress(Bitmap.CompressFormat.JPEG, 100, this)
-//            }.toByteArray()
-//            )
-//        })
-//    }
-//
-//}
+
 
 //    @SuppressLint("SetTextI18n")
 //    fun searching(view: View) {
