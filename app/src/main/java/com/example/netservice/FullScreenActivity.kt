@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.fullscreen.*
 
 
-class FullScreenPicture : AppCompatActivity() {
+class FullScreenActivity : AppCompatActivity() {
     private var imageUrl: String? = null
     private var loadImageServiceIntent: Intent? = null
     private var mBound: Boolean = false

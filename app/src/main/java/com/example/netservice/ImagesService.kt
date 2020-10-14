@@ -8,11 +8,11 @@ import android.os.IBinder
 
 class ImagesService : Service() {
 
-    private var binder: IBinder = LocalBinder(this)
+    private var binder: IBinder = ImagesBinder(this)
     var pictures: ArrayList<User>? = null
 
 
-    class LocalBinder(private val service: ImagesService) : Binder() {
+    class ImagesBinder(private val service: ImagesService) : Binder() {
         fun getPictures(): ArrayList<User>? {
             return service.pictures
         }

@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             isDownloaded = true
             progress.visibility = View.INVISIBLE
-            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+            bindService(imagesIntent, connection, Context.BIND_AUTO_CREATE)
         }
     }
 
@@ -23,13 +23,13 @@ class MainActivity : AppCompatActivity() {
     var pictures: ArrayList<User>? = null
 
     private var mBound: Boolean = false
-    private var serviceIntent: Intent? = null
+    private var imagesIntent: Intent? = null
     private lateinit var myAdapter: UserAdapter
     private val connection = object : ServiceConnection {
 
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             mBound = true
-            val binder = service as ImagesService.LocalBinder
+            val binder = service as ImagesService.ImagesBinder
             pictures = binder.getPictures()
             pictures?.let { p ->
                 myAdapter.apply {
@@ -46,14 +46,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        serviceIntent = Intent(applicationContext, ImagesService::class.java)
+        imagesIntent = Intent(applicationContext, ImagesService::class.java)
         setContentView(R.layout.activity_main)
     }
 
     override fun onResume() {
         super.onResume()
         if (isDownloaded) {
-            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+            bindService(imagesIntent, connection, Context.BIND_AUTO_CREATE)
         }
     }
 
@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        startService(serviceIntent)
+        startService(imagesIntent)
         registerReceiver(broadcastReceiver, IntentFilter("images"))
         val orientation = resources.configuration.orientation
         var viewManager = GridLayoutManager(this@MainActivity, 2)
@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
 //            val string = user.highQ?.substring(0)
             //                    var bundle = Bundle()
             //                    bundle.putParcelable("user", user)
-            val intent = Intent(this@MainActivity, FullScreenPicture::class.java).apply {
+            val intent = Intent(this@MainActivity, FullScreenActivity::class.java).apply {
                 putExtra("link", user.highQ)
                 //                        putExtras(bundle)
                 //                        putExtra("bundle", bundle)
@@ -92,12 +92,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        serviceIntent = savedInstanceState.getParcelable("intent")
+        imagesIntent = savedInstanceState.getParcelable("intent")
         isDownloaded = savedInstanceState.getBoolean("isDownloaded")
         mBound = savedInstanceState.getBoolean("mBound")
         if (isDownloaded) {
             progress.visibility = View.INVISIBLE
-            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+            bindService(imagesIntent, connection, Context.BIND_AUTO_CREATE)
         }
     }
 
@@ -106,6 +106,6 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
         outState.putBoolean("isDownloaded", isDownloaded)
         outState.putBoolean("mBound", mBound)
-        outState.putParcelable("intent", serviceIntent)
+        outState.putParcelable("intent", imagesIntent)
     }
 }
