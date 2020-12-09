@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.os.AsyncTask
 import android.os.Binder
 import android.os.IBinder
+import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.lang.ref.WeakReference
 import java.net.URL
@@ -21,8 +22,8 @@ class LoadFullImage : Service() {
 
         override fun doInBackground(vararg params: String?): Bitmap {
             val url = URL(params[0])
-            return url.openConnection().getInputStream().use {
-                BitmapFactory.decodeStream(it)
+                return url.openConnection().getInputStream().use {
+                    BitmapFactory.decodeStream(it)
             }
         }
 
@@ -46,8 +47,14 @@ class LoadFullImage : Service() {
         sendBroadcast(intent)
     }
 
+    override fun onCreate() {
+        super.onCreate()
+
+    }
+
     override fun onStart(intent: Intent?, startId: Int) {
         val url = intent?.extras!!.getString("link")
+        Log.e("LoadFullImage", "fullImage")
         AsyncLoader(this).execute(url)
     }
 

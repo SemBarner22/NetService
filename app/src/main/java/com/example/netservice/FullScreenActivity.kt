@@ -43,8 +43,12 @@ class FullScreenActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        registerReceiver(broadcastReceiver, IntentFilter("response"))
         if (isDownloaded) {
             bindService(loadImageServiceIntent, connection, Context.BIND_AUTO_CREATE)
+        }
+        if (!isDownloaded) {
+            startService(loadImageServiceIntent)
         }
     }
 
@@ -55,8 +59,6 @@ class FullScreenActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        startService(loadImageServiceIntent)
-        registerReceiver(broadcastReceiver, IntentFilter("response"))
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {

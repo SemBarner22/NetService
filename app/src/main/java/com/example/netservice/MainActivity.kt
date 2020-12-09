@@ -4,6 +4,7 @@ import android.content.*
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
@@ -48,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         imagesIntent = Intent(applicationContext, ImagesService::class.java)
         setContentView(R.layout.activity_main)
+        Log.e("start", "activity")
     }
 
     override fun onResume() {
@@ -55,18 +57,11 @@ class MainActivity : AppCompatActivity() {
         if (isDownloaded) {
             bindService(imagesIntent, connection, Context.BIND_AUTO_CREATE)
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (mBound) unbindService(connection)
-    }
-
-
-    override fun onStart() {
-        super.onStart()
-        startService(imagesIntent)
         registerReceiver(broadcastReceiver, IntentFilter("images"))
+        if (!isDownloaded) {
+            Log.e("service", "service started")
+            startService(imagesIntent)
+        }
         val orientation = resources.configuration.orientation
         var viewManager = GridLayoutManager(this@MainActivity, 2)
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -87,6 +82,16 @@ class MainActivity : AppCompatActivity() {
             layoutManager = viewManager
             adapter = myAdapter
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (mBound) unbindService(connection)
+    }
+
+
+    override fun onStart() {
+        super.onStart()
     }
 
 

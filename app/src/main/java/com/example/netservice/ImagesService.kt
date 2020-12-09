@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import android.util.Log
 
 
 class ImagesService : Service() {
@@ -28,10 +29,19 @@ class ImagesService : Service() {
         sendBroadcast(intent)
     }
 
-    override fun onCreate() {
-        super.onCreate()
+
+    override fun onStart(intent: Intent?, startId: Int) {
+        Log.e("service", "images service")
         AsyncPreviewLoader(this@ImagesService).apply {
             execute()
         }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+//        Log.e("service", "images service")
+//        AsyncPreviewLoader(this@ImagesService).apply {
+//            execute()
+//        }
     }
 }
