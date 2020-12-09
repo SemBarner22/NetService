@@ -14,7 +14,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            isDownloaded = true
             progress.visibility = View.INVISIBLE
             bindService(imagesIntent, connection, Context.BIND_AUTO_CREATE)
         }
@@ -33,6 +32,7 @@ class MainActivity : AppCompatActivity() {
             val binder = service as ImagesService.ImagesBinder
             pictures = binder.getService().pictures
             pictures?.let { p ->
+                isDownloaded = true
                 myAdapter.apply {
                     this.pictures = p
                     notifyDataSetChanged()

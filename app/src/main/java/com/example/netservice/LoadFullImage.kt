@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import java.io.ByteArrayOutputStream
+import java.lang.Exception
 import java.lang.ref.WeakReference
 import java.net.URL
 
@@ -17,13 +18,17 @@ class LoadFullImage : Service() {
     private var binder: IBinder = LoadBinder(this)
     var image: Bitmap? = null
 
-    private class AsyncLoader(service: LoadFullImage) : AsyncTask<String, Void, Bitmap>() {
+    private class AsyncLoader(service: LoadFullImage) : AsyncTask<String, Void, Bitmap?>() {
         private val serviceRef = WeakReference(service)
 
-        override fun doInBackground(vararg params: String?): Bitmap {
-            val url = URL(params[0])
+        override fun doInBackground(vararg params: String?): Bitmap? {
+            try {
+                val url = URL(params[0])
                 return url.openConnection().getInputStream().use {
                     BitmapFactory.decodeStream(it)
+                }
+            } catch (e : Exception) {
+                return null
             }
         }
 
@@ -39,6 +44,9 @@ class LoadFullImage : Service() {
     }
 
     fun onPostExecute(result: Bitmap?) {
+        if (result == null) {
+            return
+        }
         image = result
         ByteArrayOutputStream().apply {
             image?.compress(Bitmap.CompressFormat.JPEG, 50, this)
